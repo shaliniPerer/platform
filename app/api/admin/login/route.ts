@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const ADMIN_EMAIL = "admin@system.com";       
-const ADMIN_PASSWORD = "Admin@123";           // Change to your preferred password
+const ADMIN_PASSWORD = "Admin123";           // Change to your preferred password
 
 export async function POST(req: Request) {
   try {
