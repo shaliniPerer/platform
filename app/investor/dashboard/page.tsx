@@ -33,6 +33,12 @@ export default function InvestorDashboard() {
 
     const fetchInvestor = async () => {
       try {
+        // Debug: log what the browser resolves the relative API path to
+        try {
+          // eslint-disable-next-line no-console
+          console.log('Resolved /api/investor/me URL:', new URL('/api/investor/me', window.location.href).href)
+        } catch (e) {}
+
         const res = await fetch("/api/investor/me", {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -60,6 +66,12 @@ export default function InvestorDashboard() {
     const loadRequests = async () => {
       setLoadingRequests(true)
       try {
+        // Debug: log resolved absolute URL for withdrawals API
+        try {
+          // eslint-disable-next-line no-console
+          console.log('Resolved withdrawals URL:', new URL(`/api/investor/withdrawals?investorId=${investor._id}`, window.location.href).href)
+        } catch (e) {}
+
         const res = await fetch(`/api/investor/withdrawals?investorId=${investor._id}`)
         if (!res.ok) {
           console.error("Failed to load withdrawals:", res.status)
