@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
-import cloudinary from "cloudinary";
-// Configure Cloudinary
-cloudinary.v2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { writeFile } from "fs/promises";
+import path from "path";
 
 export async function POST(req: Request) {
   try {
@@ -55,25 +50,16 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Upload files to Cloudinary
+    // Save uploaded files to public/uploads
+    const uploadDir = path.join(process.cwd(), "public/uploads");
     const nicBuffer = Buffer.from(await nicFile.arrayBuffer());
     const bankBookBuffer = Buffer.from(await bankBookFile.arrayBuffer());
 
-    // Helper to upload buffer to Cloudinary
-    async function uploadToCloudinary(buffer, filename) {
-      return new Promise((resolve, reject) => {
-        cloudinary.v2.uploader.upload_stream(
-          { resource_type: "auto", public_id: filename },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        ).end(buffer);
-      });
-    }
+    const nicFileName = `nic_${Date.now()}_${nicFile.name}`;
+    const bankBookFileName = `bankBook_${Date.now()}_${bankBookFile.name}`;
 
-    const nicUpload = await uploadToCloudinary(nicBuffer, `nic_${Date.now()}_${nicFile.name}`);
-    const bankBookUpload = await uploadToCloudinary(bankBookBuffer, `bankBook_${Date.now()}_${bankBookFile.name}`);
+    await writeFile(path.join(uploadDir, nicFileName), nicBuffer);
+    await writeFile(path.join(uploadDir, bankBookFileName), bankBookBuffer);
 
     // Save in MongoDB
     const client = await clientPromise;
@@ -94,8 +80,8 @@ export async function POST(req: Request) {
       accountNo,
       branchName,
       password: hashedPassword,
-      nicFile: nicUpload.secure_url,
-      bankBookFile: bankBookUpload.secure_url,
+      nicFile: `/uploads/${nicFileName}`,
+      bankBookFile: `/uploads/${bankBookFileName}`,
       createdAt: new Date(),
     });
 
